@@ -714,8 +714,11 @@ public class EmployeeServiceImpl implements EmployeeService {
         String costCenter = resultObjectArray[6];
         String position = resultObjectArray[5];
         String photoLink = currentEmployee.getPhotoLink();
+        String hiredDate = currentEmployee.getHiredDate();
+        String dateOfBirth = currentEmployee.getDateOfBirth();
+        String privatePhoneNum = currentEmployee.getPrivatePhoneNum();
 
-        return new Employee(id, telNumber, name, department, allMobileTelNumbers, description, persNumber, plantName, login, email, costCenter, position, photoLink);
+        return new Employee(id, telNumber, name, department, allMobileTelNumbers, description, persNumber, plantName, login, email, costCenter, position, photoLink, hiredDate, dateOfBirth, privatePhoneNum);
     }
 
     private boolean objectContainAllSearchWords(Employee employee, String[] items) {
