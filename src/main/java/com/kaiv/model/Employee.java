@@ -256,6 +256,32 @@ public class Employee {
                 phoneNumbersWithDescription;
     }
 
+    public String toStringForRegex() {
+        return
+                telNumber +
+                        "|" +
+                        description +
+                        "|" +
+                        persNumber +
+                        "|" +
+                        name +
+                        "|" +
+                        department +
+                        "|" +
+                        position +
+                        "|" +
+                        costCenter +
+                        "|" +
+                        login +
+                        "|" +
+                        email +
+                        "|" +
+                        allMobileTelNumbers +
+                        "|" +
+                        plantName
+                ;
+    }
+
     public List<String> getEmployeeAsList() {
         List<String> employeeAsList = new ArrayList<>();
         employeeAsList.add(telNumber);

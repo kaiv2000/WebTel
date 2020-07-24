@@ -2,7 +2,6 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
-<%@ taglib prefix="myTagLib" uri="http://com.kaiv/taglib/Replace" %>
 
 <!DOCTYPE html>
 
@@ -174,41 +173,31 @@
                             <c:choose>
                                 <c:when test="${not empty searchString}">
 
-                                    <td style="color:#305ace"><a
-                                            href="tel:${employee.telNumber}">
-                                            <c:set var="currentField" value="${employee.telNumber}"/>
-                                            <c:set var="currentSearchString" value="${searchString}"/>
-                                            <c:set var="highlightedField"
-                                                   value="${myTagLib:replaceWithRegex(currentField, currentSearchString)}"/>
-                                            ${highlightedField}
+                                    <c:set var="telNumber"
+                                           value="${fn:replace(employee.telNumber, '<span class=highLight>', '')}"/>
+                                    <c:set var="telNumber" value="${fn:replace(telNumber, '</span>', '')}"/>
+                                    <td style="color:#305ace"><a href="tel:${telNumber}">
+                                            ${employee.telNumber}
                                     </td>
                                     <td>
-                                        <c:set var="currentField" value="${employee.description}"/>
-                                        <c:set var="currentSearchString" value="${searchString}"/>
-                                        <c:set var="highlightedField"
-                                               value="${myTagLib:replaceWithRegex(currentField, currentSearchString)}"/>
-                                            ${highlightedField}
+                                            ${employee.description}
                                     </td>
 
                                     <c:choose>
                                         <c:when test="${not isPermissionIsGranted}">
                                             <td>
-                                                <c:set var="currentField" value="${employee.persNumber}"/>
-                                                <c:set var="currentSearchString" value="${searchString}"/>
-                                                <c:set var="highlightedField"
-                                                       value="${myTagLib:replaceWithRegex(currentField, currentSearchString)}"/>
-                                                    ${highlightedField}
+                                                    ${employee.persNumber}
                                             </td>
                                         </c:when>
 
                                         <c:otherwise>
                                             <td style="color:#305ace">
-                                                <a href="${pageContext.request.contextPath}/details-${employee.persNumber}">
-                                                    <c:set var="currentField" value="${employee.persNumber}"/>
-                                                    <c:set var="currentSearchString" value="${searchString}"/>
-                                                    <c:set var="highlightedField"
-                                                           value="${myTagLib:replaceWithRegex(currentField, currentSearchString)}"/>
-                                                        ${highlightedField}
+                                                <c:set var="persNumber"
+                                                       value="${fn:replace(employee.persNumber, '<span class=highLight>', '')}"/>
+                                                <c:set var="persNumber"
+                                                       value="${fn:replace(persNumber, '</span>', '')}"/>
+                                                <a href="${pageContext.request.contextPath}/details-${persNumber}">
+                                                        ${employee.persNumber}
                                                 </a>
                                                 <div class="box">
                                                     <img src="data:image/jpeg;base64,${employee.photoLink}"
@@ -220,47 +209,27 @@
                                     </c:choose>
 
                                     <td>
-                                        <c:set var="currentField" value="${employee.name}"/>
-                                        <c:set var="currentSearchString" value="${searchString}"/>
-                                        <c:set var="highlightedField"
-                                               value="${myTagLib:replaceWithRegex(currentField, currentSearchString)}"/>
-                                            ${highlightedField}
+                                            ${employee.name}
                                     </td>
                                     <td>
-                                        <c:set var="currentField" value="${employee.department}"/>
-                                        <c:set var="currentSearchString" value="${searchString}"/>
-                                        <c:set var="highlightedField"
-                                               value="${myTagLib:replaceWithRegex(currentField, currentSearchString)}"/>
-                                            ${highlightedField}
+                                            ${employee.department}
                                     </td>
                                     <td>
-                                        <c:set var="currentField" value="${employee.position}"/>
-                                        <c:set var="currentSearchString" value="${searchString}"/>
-                                        <c:set var="highlightedField"
-                                               value="${myTagLib:replaceWithRegex(currentField, currentSearchString)}"/>
-                                            ${highlightedField}
+                                            ${employee.position}
                                     </td>
                                     <td>
-                                        <c:set var="currentField" value="${employee.costCenter}"/>
-                                        <c:set var="currentSearchString" value="${searchString}"/>
-                                        <c:set var="highlightedField"
-                                               value="${myTagLib:replaceWithRegex(currentField, currentSearchString)}"/>
-                                            ${highlightedField}
+                                            ${employee.costCenter}
                                     </td>
                                     <td>
-                                        <c:set var="currentField" value="${employee.login}"/>
-                                        <c:set var="currentSearchString" value="${searchString}"/>
-                                        <c:set var="highlightedField"
-                                               value="${myTagLib:replaceWithRegex(currentField, currentSearchString)}"/>
-                                            ${highlightedField}
+                                            ${employee.login}
                                     </td>
                                     <td>
-                                        <a href="mailto:${employee.email}">
-                                            <c:set var="currentField" value="${employee.email}"/>
-                                            <c:set var="currentSearchString" value="${searchString}"/>
-                                            <c:set var="highlightedField"
-                                                   value="${myTagLib:replaceWithRegex(currentField, currentSearchString)}"/>
-                                                ${highlightedField}
+                                        <c:set var="email"
+                                               value="${fn:replace(employee.email, '<span class=highLight>', '')}"/>
+                                        <c:set var="email"
+                                               value="${fn:replace(email, '</span>', '')}"/>
+                                        <a href="mailto:${email}">
+                                                ${employee.email}
                                         </a>
                                     </td>
                                     <td>
@@ -270,20 +239,13 @@
                                                 <c:choose>
                                                     <c:when test="${loop.index=='0'}">
                                                         <div>
-                                                            <c:set var="currentField" value="${entry}"/>
-                                                            <c:set var="currentSearchString" value="${searchString}"/>
-                                                            <c:set var="highlightedField"
-                                                                   value="${myTagLib:replaceWithRegex(currentField, currentSearchString)}"/>
-                                                                ${highlightedField}
+                                                                ${entry}
                                                         </div>
                                                     </c:when>
                                                     <c:otherwise>
                                                         <div><h6>
                                                             <c:set var="currentField" value="${entry}"/>
-                                                            <c:set var="currentSearchString" value="${searchString}"/>
-                                                            <c:set var="highlightedField"
-                                                                   value="${myTagLib:replaceWithRegex(currentField, currentSearchString)}"/>
-                                                                ${highlightedField}
+                                                                ${entry}
                                                         </h6></div>
                                                     </c:otherwise>
                                                 </c:choose>
@@ -291,11 +253,7 @@
                                         </c:if>
                                     </td>
                                     <td>
-                                        <c:set var="currentField" value="${employee.plantName}"/>
-                                        <c:set var="currentSearchString" value="${searchString}"/>
-                                        <c:set var="highlightedField"
-                                               value="${myTagLib:replaceWithRegex(currentField, currentSearchString)}"/>
-                                            ${highlightedField}
+                                            ${employee.plantName}
                                     </td>
 
                                 </c:when>

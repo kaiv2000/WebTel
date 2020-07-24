@@ -272,6 +272,16 @@ public class EmployeeController {
 
     String getPhotoLink(String plantName, String persNumber) {
 
+        String startHighlightTag = "<span class=highLight>";
+        String endHighlightTag = "</span>";
+
+        if (persNumber.contains(startHighlightTag)){
+            persNumber = persNumber.replace(startHighlightTag, "");
+        }
+        if (persNumber.contains(endHighlightTag)){
+            persNumber = persNumber.replace(endHighlightTag, "");
+        }
+
         File photosDirectory = null;
         String photoLink = "";
 

@@ -10,7 +10,6 @@ import org.springframework.beans.support.PagedListHolder;
 import org.springframework.context.annotation.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.util.ReflectionUtils;
 import org.springframework.web.context.WebApplicationContext;
 
 import javax.naming.Context;
@@ -25,7 +24,7 @@ import javax.naming.ldap.LdapContext;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.lang.reflect.Field;
+import java.lang.reflect.Array;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -469,10 +468,12 @@ public class EmployeeServiceImpl implements EmployeeService {
                         mobileTelNumber.add(mobileNumberFromWord);
                     } else {
                         if (additionalMobileTelNumbers.isEmpty()) {
-                            additionalMobileTelNumbers.add("");
+                            allMobileTelNumbers.addAll(additionalMobileTelNumbers);
                         }
                         additionalMobileTelNumbers.add(mobileNumberFromWord + " (" + nameFromWord + ")");
                     }
+
+
                 }
             }
 
@@ -504,29 +505,19 @@ public class EmployeeServiceImpl implements EmployeeService {
         return employeeMap;
     }
 
-    /*public static void main(String[] args) {
+ /*   public static void main(String[] args) {
         EmployeeServiceImpl test = new EmployeeServiceImpl();
-
-    *//*    test.TelListe_FILE_NAME = "//svua1file01/groups/IT/Siemens/Codes.xlsm";
+        test.TelListe_FILE_NAME = "//svua1file01/groups/IT/Siemens/Codes.xlsm";
         test.MobilePhones_FILE_NAME = "//svua1file01/infos/IT Info/List of LEONI Kyivstar numbers.xlsx";
         test.getEmployeeListNewSession();
-        test.searchEmployeesByName("євков&8");
-*//*
-        String regex = "^К.*\\b.+\\bВ";
-        String input = "Кастран Наталія Володимирівна";
-        Pattern pattern = test.getPatternObject(regex);
 
-        Matcher matcher = pattern.matcher(input);
+        String regex = "\\A4(\\d){3}.+Kolomyia\\z";
+        String regex2 = "П.*\\bІван\\b";
 
-        if (matcher.find()) {
-            String foundedMatchInCurrentValue = matcher.group().trim();
-            System.out.println(foundedMatchInCurrentValue);
-        }
+        test.searchEmployeesByName(regex);
     }*/
 
     public EmployeeWithAdditionalInfo searchEmployeesByName(String inputString) {
-
-        String searchStringLowerCase = inputString.toLowerCase();
 
         List<Employee> resultList = new ArrayList<>();
         Set<String> matchedRegexFields = new HashSet<>();
@@ -538,46 +529,31 @@ public class EmployeeServiceImpl implements EmployeeService {
             if (size > 0) {
                 String regex = inputString.split("&")[1];
                 resultList = getOneSearchListResultWithRegEx(regex);
-
-               /* Pattern pattern = getPatternObject(regex);
-                for (Employee oneResult : resultList) {
-
-                    if (pattern != null) {
-
-                        ReflectionUtils.doWithFields(oneResult.getClass(), field -> {
-                            field.setAccessible(true);
-                            Object currentField = field.get(oneResult);
-                            if (currentField != null) {
-                                String currentFieldsValue = String.valueOf(currentField).trim();
-                                if (!currentFieldsValue.isEmpty()) {
-                                    Matcher matcher = pattern.matcher(currentFieldsValue);
-                                    boolean isRegexFound = matcher.find();
-                                    if (isRegexFound) {
-                                        String foundedMatchInCurrentValue = matcher.group().trim();
-                                        if (!foundedMatchInCurrentValue.isEmpty()) {
-                                            matchedRegexFields.add(foundedMatchInCurrentValue);
-                                        }
-                                    }
-                                }
-                            }
-                        });
-                    }
-                }*/
             }
 
-        } else if (searchStringLowerCase.contains("&")) {
+        } else if (inputString.contains("&")) {
 
-            String[] searchWords = searchStringLowerCase.split("&");
+            inputString = inputString.toLowerCase();
+            String[] searchWords = inputString.split("&");
 
             Map<Integer, Employee> employeeMap = new HashMap<>();
 
             for (String currentSearchWord : searchWords) {
 
-                List<Employee> getOneSearchListResult = getOneSearchListResult(currentSearchWord);
+                List<Employee> oneSearchListResult = getOneSearchListResult(currentSearchWord);
 
-                if (getOneSearchListResult != null && !getOneSearchListResult.isEmpty()) {
-                    for (Employee currentEmployee : getOneSearchListResult) {
+                if (oneSearchListResult != null && !oneSearchListResult.isEmpty()) {
+                    for (Employee currentEmployee : oneSearchListResult) {
                         if (objectContainAllSearchWords(currentEmployee, searchWords)) {
+                            for (String searchWord : searchWords) {
+                                Pattern pattern = getPatternObject(searchWord, false);
+                                if (pattern != null) {
+                                    String inputField = currentEmployee.toStringForRegex();
+                                    if (pattern.matcher(inputField.toLowerCase()).find()) {
+                                        currentEmployee = getEmployeeWithHighlightedTag(currentEmployee, pattern, inputField, false);
+                                    }
+                                }
+                            }
                             employeeMap.put(currentEmployee.getId(), currentEmployee);
                         }
                     }
@@ -589,13 +565,41 @@ public class EmployeeServiceImpl implements EmployeeService {
             }
 
         } else {
-            resultList = getOneSearchListResult(searchStringLowerCase);
+            List<Employee> result = new LinkedList<>();
+            List<Employee> searchResultList = getOneSearchListResult(inputString.toLowerCase());
+            Pattern pattern = getPatternObject(inputString, false);
+            if (pattern != null) {
+                for (Employee currentEmployee : searchResultList) {
+                    String inputField = currentEmployee.toStringForRegex();
+                    if (pattern.matcher(inputField.toLowerCase()).find()) {
+                        result.add(getEmployeeWithHighlightedTag(currentEmployee, pattern, inputField, false));
+                    }
+                }
+            }
+            resultList = result;
         }
 
         return new EmployeeWithAdditionalInfo(resultList, matchedRegexFields);
     }
 
-    private Pattern getPatternObject(String regex) {
+    private Pattern getPatternObject(String regex, boolean isNeedToUseRegex) {
+
+        if (!isNeedToUseRegex && !regex.contains("(") && !regex.contains(")")) {
+            regex = regex.toLowerCase();
+        }
+
+        if (regex.startsWith("+")) {
+            regex = regex.replace("+", "\\+");
+        }
+
+        if (!isNeedToUseRegex) {
+            if (regex.contains("(")) {
+                regex = regex.replace("(", "\\(");
+            }
+            if (regex.contains(")")) {
+                regex = regex.replace(")", "\\)");
+            }
+        }
 
         Pattern pattern = null;
         try {
@@ -606,36 +610,111 @@ public class EmployeeServiceImpl implements EmployeeService {
         return pattern;
     }
 
-
     private List<Employee> getOneSearchListResultWithRegEx(String regex) {
-
         List<Employee> result = new ArrayList<>();
 
-        Pattern pattern = getPatternObject(regex);
-
+        Pattern pattern = getPatternObject(regex, true);
         if (pattern != null) {
-            Comparator<Employee> groupByComparator = Comparator.comparing(Employee::getPersNumber).thenComparing(Employee::getTelNumber).thenComparing(Employee::getDepartment);
+            for (Employee currentEmployee : employeeMap.values()) {
+                String inputField = currentEmployee.toStringForRegex();
+                if (pattern.matcher(inputField).find()) {
+                    result.add(getEmployeeWithHighlightedTag(currentEmployee, pattern, inputField, true));
+                }
+            }
+        }
+        return result;
+    }
 
-            Pattern finalPattern = pattern;
-            result = employeeMap.values()
-                    .stream()
-                    .filter(e -> finalPattern.matcher(e.getName()).find() ||
-                            finalPattern.matcher(e.getPosition()).find() ||
-                            finalPattern.matcher(e.getTelNumber()).find() ||
-                            finalPattern.matcher(e.getEmail()).find() ||
-                            finalPattern.matcher(e.getCostCenter()).find() ||
-                            finalPattern.matcher(e.getLogin()).find() ||
-                            finalPattern.matcher(e.getAllMobileTelNumbersString()).find() ||
-                            finalPattern.matcher(e.getPersNumber()).find() ||
-                            finalPattern.matcher(e.getDepartment()).find() ||
-                            finalPattern.matcher(e.getDescription()).find() ||
-                            finalPattern.matcher(e.getPlantName()).find()
-                    )
-                    .sorted(groupByComparator)
-                    .collect(Collectors.toList());
+    Employee getEmployeeWithHighlightedTag(Employee currentEmployee, Pattern pattern, String inputField, boolean isNeedToUseRegex) {
+
+        String startHighlightTag = "<span class=highLight>";
+        String endHighlightTag = "</span>";
+
+        String startHighlight = "<start>";
+        String endHighlight = "<end>";
+
+        Matcher matcher;
+        if (isNeedToUseRegex) {
+            matcher = pattern.matcher(inputField);
+        } else {
+            matcher = pattern.matcher(inputField.toLowerCase());
         }
 
-        return result;
+        String outputString = "";
+
+        while (matcher.find()) {
+
+            int startIndex = matcher.start();
+            int endIndex = matcher.end();
+
+            if (startIndex != endIndex) {
+                String foundedString = inputField.substring(startIndex, endIndex);
+                String replacedString = startHighlight + foundedString + endHighlight;
+                try {
+                    String firstPart = inputField.substring(0, startIndex);
+                    String endPart = inputField.substring(endIndex);
+                    String highlightedResult = firstPart + replacedString + endPart;
+                    if (!highlightedResult.isEmpty()) {
+                        outputString = highlightedResult;
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        if (outputString.isEmpty()) {
+            outputString = inputField;
+        }
+
+        String[] currentUserDataInArray = outputString.split("\\|");
+
+        StringBuilder stringBuilder = new StringBuilder();
+
+        boolean iSNeedToMarkNextPart = false;
+        for (String currentPart : currentUserDataInArray) {
+
+            if (currentPart.contains(startHighlight)) {
+                currentPart = currentPart.replace(startHighlight, startHighlightTag) + endHighlightTag;
+                iSNeedToMarkNextPart = true;
+            }
+
+            if (currentPart.contains(endHighlight)) {
+                currentPart = currentPart.replace(endHighlight, endHighlightTag);
+                if (!currentPart.contains(startHighlightTag)) {
+                    currentPart = startHighlightTag + currentPart;
+                }
+                iSNeedToMarkNextPart = false;
+            }
+
+            if (iSNeedToMarkNextPart && !currentPart.contains(startHighlightTag) && !currentPart.contains(startHighlightTag)) {
+                currentPart = startHighlightTag + currentPart + endHighlightTag;
+            }
+
+            stringBuilder.append(currentPart);
+            stringBuilder.append("|");
+        }
+
+        String resultString = stringBuilder.toString();
+
+        String resultStringWithout = resultString.substring(0, resultString.length() - 1);
+        String[] resultObjectArray = resultStringWithout.split("\\|");
+
+        int id = currentEmployee.getId();
+        String telNumber = resultObjectArray[0];
+        String name = resultObjectArray[3];
+        String department = resultObjectArray[4];
+        List<String> allMobileTelNumbers = new ArrayList(Arrays.asList(resultObjectArray[9].replace("[", "").replace("]", "").split(",")));
+        String description = resultObjectArray[1];
+        String persNumber = resultObjectArray[2];
+        String plantName = resultObjectArray[10];
+        String login = resultObjectArray[7];
+        String email = resultObjectArray[8];
+        String costCenter = resultObjectArray[6];
+        String position = resultObjectArray[5];
+        String photoLink = currentEmployee.getPhotoLink();
+
+        return new Employee(id, telNumber, name, department, allMobileTelNumbers, description, persNumber, plantName, login, email, costCenter, position, photoLink);
     }
 
     private boolean objectContainAllSearchWords(Employee employee, String[] items) {
