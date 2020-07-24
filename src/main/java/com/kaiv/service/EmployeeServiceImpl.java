@@ -500,7 +500,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         employeeMap.put(id, new Employee(id, telNumber, name, department, allMobileTelNumbers, description, persNumber, plantName, login, email, costCenter, position, photoLink, hiredDate, dateOfBirth, privatePhoneNum));
     }
 
-
     public Map<Integer, Employee> getAllEmployees() {
         return employeeMap;
     }
