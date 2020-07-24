@@ -696,7 +696,9 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         String resultString = stringBuilder.toString();
 
+
         String resultStringWithout = resultString.substring(0, resultString.length() - 1);
+
         String[] resultObjectArray = resultStringWithout.split("\\|");
 
         int id = currentEmployee.getId();
@@ -706,7 +708,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         List<String> allMobileTelNumbers = new ArrayList(Arrays.asList(resultObjectArray[9].replace("[", "").replace("]", "").split(",")));
         String description = resultObjectArray[1];
         String persNumber = resultObjectArray[2];
-        String plantName = resultObjectArray[10];
+        String plantName = resultObjectArray.length == 11 ? resultObjectArray[10] : "";
         String login = resultObjectArray[7];
         String email = resultObjectArray[8];
         String costCenter = resultObjectArray[6];
