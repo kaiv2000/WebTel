@@ -617,6 +617,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             for (Employee currentEmployee : employeeMap.values()) {
                 String inputField = currentEmployee.toStringForRegex();
                 if (pattern.matcher(inputField).find()) {
+                    System.out.println(currentEmployee.getHiredDate());
                     result.add(getEmployeeWithHighlightedTag(currentEmployee, pattern, inputField, true));
                 }
             }
