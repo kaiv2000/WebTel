@@ -11,16 +11,16 @@
 
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
-    <title>Телефонний довідник WUAST</title>
+    <title>LEONI UA Telephone List</title>
 
     <spring:url value="/resources/css/bootstrap.min.css" var="bootstrapCss"/>
     <spring:url value="/resources/js/bootstrap.min.js" var="bootstrapJs"/>
     <spring:url value="/resources/logo.png" var="logo"/>
     <spring:url value="/" var="urlHome"/>
 
+    <script src="${bootstrapJs}"></script>
     <link href="${bootstrapCss}" rel="stylesheet"/>
     <link href="${logo}" rel="stylesheet"/>
-    <script src="${bootstrapJs}"></script>
 
     <style>
 

@@ -17,15 +17,14 @@
 
     <spring:url value="/resources/css/bootstrap.min.css" var="bootstrapCss"/>
     <spring:url value="/resources/js/bootstrap.min.js" var="bootstrapJs"/>
-    <spring:url value="/resources/js/jquery-3.3.1.min.js" var="jqueryJs"/>
+    <spring:url value="/resources/js/jquery-3.5.1.min.js" var="jqueryJs"/>
     <spring:url value="/resources/js/mark.min.js" var="markJs"/>
     <spring:url value="/resources/logo.png" var="logo"/>
-    <spring:url value="/tellist" var="pageurl"/>
-    <spring:url value="/" var="urlHome"/>
+    <spring:url value="/list" var="homePageUrl"/>
 
     <link href="${bootstrapCss}" rel="stylesheet"/>
-    <script src="${bootstrapJs}"></script>
     <script src=${jqueryJs}></script>
+    <script src="${bootstrapJs}"></script>
     <script src="${markJs}" charset="UTF-8"></script>
     <link href="${logo}" rel="stylesheet"/>
 
@@ -119,7 +118,7 @@
     <div class="container">
 
         <div class="navbar-header">
-            <a class="navbar-brand" href="${pageContext.request.contextPath}/tellist">
+            <a class="navbar-brand" href="${pageContext.request.contextPath}">
                 <span class="glyphicon glyphicon-list" aria-hidden="true"></span>
                 <b>Main page</b>
             </a>
@@ -128,7 +127,7 @@
         <ul class="nav navbar-nav">
 
             <li>
-                <form class="navbar-form" action="${pageContext.request.contextPath}/tellist" method="get"
+                <form class="navbar-form" action="${homePageUrl}" method="get"
                       id="seachEmployeeForm" role="form">
 
                     <div class="input-group">
@@ -182,7 +181,7 @@
                 <div class="alert alert-danger">
                     <strong>Access to this page is forbidden for you.</strong>
                 </div>
-                <h3>Go to <a href="${urlHome}">main page</a></h3>
+                <h3>Go to <a href="${pageContext.request.contextPath}">main page</a></h3>
             </c:when>
 
             <c:otherwise>

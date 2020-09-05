@@ -17,17 +17,17 @@
 
     <spring:url value="/resources/css/bootstrap.min.css" var="bootstrapCss"/>
     <spring:url value="/resources/js/bootstrap.min.js" var="bootstrapJs"/>
-    <spring:url value="/resources/js/jquery-3.3.1.min.js" var="jqueryJs"/>
+    <spring:url value="/resources/js/jquery-3.5.1.min.js" var="jqueryJs"/>
     <spring:url value="/resources/js/mark.min.js" var="markJs"/>
     <spring:url value="/resources/logo.png" var="logo"/>
-    <spring:url value="/tellist" var="pageurl"/>
+    <spring:url value="/resources/catload.gif" var="loadPic"/>
+    <spring:url value="/list" var="homePageUrl"/>
 
-
-    <link href="${bootstrapCss}" rel="stylesheet"/>
-    <script src="${bootstrapJs}"></script>
     <script src=${jqueryJs}></script>
+    <script src="${bootstrapJs}"></script>
+    <link href="${bootstrapCss}" rel="stylesheet"/>
     <script src="${markJs}" charset="UTF-8"></script>
-    <link href="${logo}" rel="stylesheet"/>
+    <link href="${logo}"/>
 
     <style>
         body {
@@ -70,27 +70,34 @@
             background-color: yellow;
         }
 
+        img.center {
+            display: block;
+            margin: 0 auto;
+        }
+
     </style>
 
+    <meta http-equiv="X-UA-Compatible" content="IE=EDGE"/>
 
 </head>
 
+<body onload="loadData()">
 
 <nav class="navbar navbar-default navbar-fixed-top">
 
     <div class="container">
 
         <div class="navbar-header">
-            <a class="navbar-brand" href="${pageContext.request.contextPath}/tellist">
+            <a class="navbar-brand" href="${pageContext.request.contextPath}">
                 <span class="glyphicon glyphicon-list" aria-hidden="true"></span>
-                <b>Main page</b>
+                <b id="mainPageButton">Main page</b>
             </a>
         </div>
 
         <ul class="nav navbar-nav">
 
             <li>
-                <form class="navbar-form" action="${pageContext.request.contextPath}/tellist" method="get"
+                <form class="navbar-form" action="${homePageUrl}" method="get"
                       id="seachEmployeeForm" role="form">
 
                     <div class="input-group">
@@ -127,291 +134,291 @@
     </div>
 </nav>
 
+<h2 style="text-align: center">
+    LEONI UA Telephone List
+</h2>
 
-<body>
+<c:set var="sessionNotCreated" value="${empty employeeList}"/>
 
-<div class="container-fluid">
+<script type="text/javascript">
+    function loadData() {
 
-    <h2 style="text-align: center">
-        LEONI UA Telephone List
-    </h2>
+        var pageNotLoaded = ${sessionNotCreated};
 
-    <!--Employees List-->
+        if (pageNotLoaded == true) {
 
-    <form action="${pageContext.request.contextPath}/employee" method="post" id="employeeForm" role="form">
+            document.getElementById("waitData").style.display = 'block';
+            document.getElementById("mainData").style.display = 'none';
 
-        <c:choose>
-            <c:when test="${not empty employeeList.pageList}">
+            const request = new XMLHttpRequest();
+            request.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    $.ajaxSetup({cache: false});
+                    $("#mainData").load(" #mainData > *", function () {
+                        document.getElementById("waitData").style.display = 'none';
+                        document.getElementById("mainData").style.display = 'block';
+                    });
+                }
+            }
+            request.open("GET", "${homePageUrl}", true);
+            request.send(null);
+        }
+    }
 
-                <c:set var="pageListHolder" value="${employeeList}" scope="session"/>
-                <c:set var="allPagesCount" value="${allPagesCount}"/>
-                <c:set var="currentPage" value="${currentPage}"/>
+</script>
 
-                <table class="table table-striped">
-                    <thead>
+<script type="text/javascript">
+    function refreshPage() {
 
-                    <tr>
-                        <th><b>Phone No</b></th>
-                        <th><b>Phone Description</b></th>
-                        <th><b>Personal ID</b></th>
-                        <th><b>Name</b></th>
-                        <th><b>Department</b></th>
-                        <th><b>Position</b></th>
-                        <th><b>CC</b></th>
-                        <th><b>Login</b></th>
-                        <th><b>E-mail</b></th>
-                        <th><b>Mobile</b></th>
-                        <th><b>Location</b></th>
-                    </tr>
-                    </thead>
+    };
+</script>
 
-                    <tbody>
 
-                    <c:forEach var="employee" items="${pageListHolder.pageList}">
-                        <tr class="${classSucess}">
+<div id="waitData" style="display: none;">
 
-                            <c:choose>
-                                <c:when test="${not empty searchString}">
+    <img class="center" src="${loadPic}"/>
 
-                                    <c:set var="telNumber"
-                                           value="${fn:replace(employee.telNumber, '<span class=highLight>', '')}"/>
-                                    <c:set var="telNumber" value="${fn:replace(telNumber, '</span>', '')}"/>
-                                    <td style="color:#305ace"><a href="tel:${telNumber}">
-                                            ${employee.telNumber}
-                                    </td>
-                                    <td>
-                                            ${employee.description}
-                                    </td>
+</div>
 
-                                    <c:choose>
-                                        <c:when test="${not isPermissionIsGranted}">
-                                            <td>
+<div class="container-fluid" id="mainData">
+
+    <c:choose>
+        <c:when test="${not empty employeeList.pageList}">
+
+            <c:set var="pageListHolder" value="${employeeList}" scope="session"/>
+            <c:set var="allPagesCount" value="${allPagesCount}"/>
+            <c:set var="currentPage" value="${currentPage}"/>
+
+            <table class="table table-striped">
+                <thead>
+
+                <tr>
+                    <th><b>Phone No</b></th>
+                    <th><b>Phone Description</b></th>
+                    <th><b>Personal ID</b></th>
+                    <th><b>Name</b></th>
+                    <th><b>Department</b></th>
+                    <th><b>Position</b></th>
+                    <th><b>CC</b></th>
+                    <th><b>Login</b></th>
+                    <th><b>E-mail</b></th>
+                    <th><b>Mobile</b></th>
+                    <th><b>Location</b></th>
+                </tr>
+                </thead>
+
+                <tbody>
+
+                <c:forEach var="employee" items="${pageListHolder.pageList}">
+                    <tr class="${classSucess}">
+
+                        <c:choose>
+                            <c:when test="${not empty searchString}">
+
+                                <c:set var="telNumber"
+                                       value="${fn:replace(employee.telNumber, '<span class=highLight>', '')}"/>
+                                <c:set var="telNumber" value="${fn:replace(telNumber, '</span>', '')}"/>
+                                <td style="color:#305ace"><a href="tel:${telNumber}">
+                                        ${employee.telNumber}
+                                </td>
+                                <td>
+                                        ${employee.description}
+                                </td>
+
+                                <c:choose>
+                                    <c:when test="${not isPermissionIsGranted}">
+                                        <td>
+                                                ${employee.persNumber}
+                                        </td>
+                                    </c:when>
+
+                                    <c:otherwise>
+                                        <td style="color:#305ace">
+                                            <c:set var="persNumber"
+                                                   value="${fn:replace(employee.persNumber, '<span class=highLight>', '')}"/>
+                                            <c:set var="persNumber"
+                                                   value="${fn:replace(persNumber, '</span>', '')}"/>
+                                            <a href="${pageContext.request.contextPath}/details-${persNumber}">
                                                     ${employee.persNumber}
-                                            </td>
-                                        </c:when>
+                                            </a>
+                                            <div class="box">
+                                                <img src="data:image/jpeg;base64,${employee.photoLink}"
+                                                     style="width:250px; border: 1px solid #ddd; padding: 5px;">
+                                                </img>
+                                            </div>
+                                        </td>
+                                    </c:otherwise>
+                                </c:choose>
 
-                                        <c:otherwise>
-                                            <td style="color:#305ace">
-                                                <c:set var="persNumber"
-                                                       value="${fn:replace(employee.persNumber, '<span class=highLight>', '')}"/>
-                                                <c:set var="persNumber"
-                                                       value="${fn:replace(persNumber, '</span>', '')}"/>
-                                                <a href="${pageContext.request.contextPath}/details-${persNumber}">
-                                                        ${employee.persNumber}
-                                                </a>
-                                                <div class="box">
-                                                    <img src="data:image/jpeg;base64,${employee.photoLink}"
-                                                         style="width:250px; border: 1px solid #ddd; padding: 5px;">
-                                                    </img>
-                                                </div>
-                                            </td>
-                                        </c:otherwise>
-                                    </c:choose>
+                                <td>
+                                        ${employee.name}
+                                </td>
+                                <td>
+                                        ${employee.department}
+                                </td>
+                                <td>
+                                        ${employee.position}
+                                </td>
+                                <td>
+                                        ${employee.costCenter}
+                                </td>
+                                <td>
+                                        ${employee.login}
+                                </td>
+                                <td>
+                                    <c:set var="email"
+                                           value="${fn:replace(employee.email, '<span class=highLight>', '')}"/>
+                                    <c:set var="email"
+                                           value="${fn:replace(email, '</span>', '')}"/>
+                                    <a href="mailto:${email}">
+                                            ${employee.email}
+                                    </a>
+                                </td>
+                                <td>
+                                    <c:if test="${not empty employee.allMobileTelNumbers}">
+                                        <c:forEach items="${employee.allMobileTelNumbers}" var="entry"
+                                                   varStatus="loop">
+                                            <c:choose>
+                                                <c:when test="${loop.index=='0'}">
+                                                    <div>
+                                                            ${entry}
+                                                    </div>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <div><h6>
+                                                        <c:set var="currentField" value="${entry}"/>
+                                                            ${entry}
+                                                    </h6></div>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </c:forEach>
+                                    </c:if>
+                                </td>
+                                <td>
+                                        ${employee.plantName}
+                                </td>
 
-                                    <td>
-                                            ${employee.name}
-                                    </td>
-                                    <td>
-                                            ${employee.department}
-                                    </td>
-                                    <td>
-                                            ${employee.position}
-                                    </td>
-                                    <td>
-                                            ${employee.costCenter}
-                                    </td>
-                                    <td>
-                                            ${employee.login}
-                                    </td>
-                                    <td>
-                                        <c:set var="email"
-                                               value="${fn:replace(employee.email, '<span class=highLight>', '')}"/>
-                                        <c:set var="email"
-                                               value="${fn:replace(email, '</span>', '')}"/>
-                                        <a href="mailto:${email}">
-                                                ${employee.email}
-                                        </a>
-                                    </td>
-                                    <td>
-                                        <c:if test="${not empty employee.allMobileTelNumbers}">
-                                            <c:forEach items="${employee.allMobileTelNumbers}" var="entry"
-                                                       varStatus="loop">
-                                                <c:choose>
-                                                    <c:when test="${loop.index=='0'}">
-                                                        <div>
-                                                                ${entry}
-                                                        </div>
-                                                    </c:when>
-                                                    <c:otherwise>
-                                                        <div><h6>
-                                                            <c:set var="currentField" value="${entry}"/>
-                                                                ${entry}
-                                                        </h6></div>
-                                                    </c:otherwise>
-                                                </c:choose>
-                                            </c:forEach>
-                                        </c:if>
-                                    </td>
-                                    <td>
-                                            ${employee.plantName}
-                                    </td>
+                            </c:when>
 
-                                </c:when>
+                            <c:otherwise>
 
-                                <c:otherwise>
+                                <td style="color:#305ace"><a
+                                        href="tel:${employee.telNumber}">${employee.telNumber}</a></td>
+                                <td>${employee.description}</td>
 
-                                    <td style="color:#305ace"><a
-                                            href="tel:${employee.telNumber}">${employee.telNumber}</a></td>
-                                    <td>${employee.description}</td>
+                                <c:choose>
+                                    <c:when test="${not isPermissionIsGranted}">
+                                        <td>${employee.persNumber}</td>
+                                    </c:when>
 
-                                    <c:choose>
-                                        <c:when test="${not isPermissionIsGranted}">
-                                            <td>${employee.persNumber}</td>
-                                        </c:when>
+                                    <c:otherwise>
+                                        <td style="color:#305ace">
+                                            <a href="${pageContext.request.contextPath}/details-${employee.persNumber}">${employee.persNumber}</a>
+                                            <div class="box">
+                                                <img src="data:image/jpeg;base64,${employee.photoLink}"
+                                                     style="width:250px; border: 1px solid #ddd; padding: 5px;">
+                                                </img>
+                                            </div>
+                                        </td>
+                                    </c:otherwise>
+                                </c:choose>
 
-                                        <c:otherwise>
-                                            <td style="color:#305ace">
-                                                <a href="${pageContext.request.contextPath}/details-${employee.persNumber}">${employee.persNumber}</a>
-                                                <div class="box">
-                                                    <img src="data:image/jpeg;base64,${employee.photoLink}"
-                                                         style="width:250px; border: 1px solid #ddd; padding: 5px;">
-                                                    </img>
-                                                </div>
-                                            </td>
-                                        </c:otherwise>
-                                    </c:choose>
+                                <td>${employee.name}</td>
+                                <td>${employee.department}</td>
+                                <td>${employee.position}</td>
+                                <td>${employee.costCenter}</td>
+                                <td>${employee.login}</td>
+                                <td>
+                                    <a href="mailto:${employee.email}">${employee.email}</a>
+                                </td>
+                                <td>
+                                    <c:if test="${not empty employee.allMobileTelNumbers}">
+                                        <c:forEach items="${employee.allMobileTelNumbers}" var="entry"
+                                                   varStatus="loop">
+                                            <c:choose>
+                                                <c:when test="${loop.index=='0'}">
+                                                    <div>${entry}</div>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <div><h6>${entry}</h6></div>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </c:forEach>
+                                    </c:if>
+                                </td>
+                                <td>${employee.plantName}</td>
 
-                                    <td>${employee.name}</td>
-                                    <td>${employee.department}</td>
-                                    <td>${employee.position}</td>
-                                    <td>${employee.costCenter}</td>
-                                    <td>${employee.login}</td>
-                                    <td>
-                                        <a href="mailto:${employee.email}">${employee.email}</a>
-                                    </td>
-                                    <td>
-                                        <c:if test="${not empty employee.allMobileTelNumbers}">
-                                            <c:forEach items="${employee.allMobileTelNumbers}" var="entry"
-                                                       varStatus="loop">
-                                                <c:choose>
-                                                    <c:when test="${loop.index=='0'}">
-                                                        <div>${entry}</div>
-                                                    </c:when>
-                                                    <c:otherwise>
-                                                        <div><h6>${entry}</h6></div>
-                                                    </c:otherwise>
-                                                </c:choose>
-                                            </c:forEach>
-                                        </c:if>
-                                    </td>
-                                    <td>${employee.plantName}</td>
+                            </c:otherwise>
 
-                                </c:otherwise>
+                        </c:choose>
 
-                            </c:choose>
+                    </tr>
 
-                        </tr>
+                </c:forEach>
 
-                    </c:forEach>
+                </tbody>
 
-                    </tbody>
-
-                </table>
+            </table>
 
 
-                <nav class="navbar navbar-default navbar-fixed-bottom">
+            <nav class="navbar navbar-default navbar-fixed-bottom">
 
-                    <div>
-                        <ul class="pager">
+                <div>
+                    <ul class="pager">
 
-                            <c:choose>
+                        <c:choose>
 
-                                <c:when test="${pageListHolder.firstPage}">
+                            <c:when test="${pageListHolder.firstPage}">
 
-                                    <li class="page-item disabled"><a>Previous page</a></li>
+                                <li class="page-item disabled"><a>Previous page</a></li>
 
-                                </c:when>
+                            </c:when>
 
-                                <c:otherwise>
-                                    <li class="page-item">
-                                        <a class="page-link" href="${pageurl}?show=prevPage">Previous page</a>
-                                    </li>
-                                </c:otherwise>
+                            <c:otherwise>
+                                <li class="page-item">
+                                    <a class="page-link" href="${homePageUrl}?show=prevPage">Previous page</a>
+                                </li>
+                            </c:otherwise>
 
-                            </c:choose>
+                        </c:choose>
 
-                            <span class="badge">Page ${currentPage} of ${allPagesCount} (total ${foundedObjectsCount} records) </span>
+                        <span class="badge">Page ${currentPage} of ${allPagesCount} (total ${foundedObjectsCount} records) </span>
 
-                            <c:choose>
+                        <c:choose>
 
-                                <c:when test="${pageListHolder.lastPage}">
+                            <c:when test="${pageListHolder.lastPage}">
 
-                                    <li class="page-item disabled">
-                                        <a class="page-link">Next page</a>
-                                    </li>
+                                <li class="page-item disabled">
+                                    <a class="page-link">Next page</a>
+                                </li>
 
-                                </c:when>
+                            </c:when>
 
-                                <c:otherwise>
+                            <c:otherwise>
 
-                                    <li class="page-item">
-                                        <a class="page-link" href="${pageurl}?show=nextPage">Next page</a>
-                                    </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="${homePageUrl}?show=nextPage">Next page</a>
+                                </li>
 
-                                </c:otherwise>
+                            </c:otherwise>
 
-                            </c:choose>
+                        </c:choose>
 
 
-                        </ul>
-                    </div>
-                </nav>
-
-                <%--<c:if test="${not empty searchString}">
-
-                    <script>
-
-                        var instance = new Mark(document.querySelector(".table"));
-                        var searchStringJs = "${searchString}";
-
-                        if (searchStringJs.indexOf("&") == 0) {
-
-                            /*  var inputRegex = searchStringJs.split("&")[1];
-                              var escapedSpecCharsRegex = JSON.stringify(inputRegex).replace(new RegExp('"', 'g'), '');
-                              var readyRegex = new RegExp(escapedSpecCharsRegex, 'gim');
-                              instance.markRegExp(readyRegex, {"exclude": ["b"]});*/
-
-                            /*   var matchedRegexFieldsValues = "
-                            ${matchedRegexFieldsValues}";
-                            var arrayFields = matchedRegexFieldsValues.split("&");
-                            arrayFields.forEach(function (entry) {
-                                instance.mark(entry, {"exclude": ["b"]});
-                            });*/
-
-                        } else if (searchStringJs.indexOf("&") != -1) {
-                            var array = searchStringJs.split("&");
-                            array.forEach(function (entry) {
-
-                                instance.mark(entry, {"exclude": ["b"]});
-                            });
-                        } else {
-                            // instance.mark(searchStringJs, {"exclude": ["b"]});
-                        }
-                    </script>
-                </c:if>--%>
-
-            </c:when>
-
-            <c:otherwise>
-                <br>
-                <div class="alert alert-info">
-                    According to the given criteria, nothing was not found
+                    </ul>
                 </div>
-            </c:otherwise>
+            </nav>
 
-        </c:choose>
+        </c:when>
 
-    </form>
+        <c:otherwise>
+            <br>
+            <div class="alert alert-info">
+                According to the given criteria, nothing was not found
+            </div>
+        </c:otherwise>
+
+    </c:choose>
 
 </div>
 

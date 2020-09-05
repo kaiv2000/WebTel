@@ -9,6 +9,7 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.support.PagedListHolder;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
@@ -36,6 +37,7 @@ public class EmployeeController {
     @Autowired
     EmployeeService employeeService;
 
+    @Lazy
     @Resource(name = "getEmployeeListNewSession")
     Map<Integer, Employee> employeeMap;
 
@@ -62,16 +64,48 @@ public class EmployeeController {
 
     // main page
     @RequestMapping("/")
-    public String index() {
-        return "startPage";
+    public String index(HttpServletRequest request) {
+        if (!currentSessionUserName.isEmpty()) {
+            request.getSession().setAttribute("currentSessionUserName", currentSessionUserName);
+        }
+        request.getSession().removeAttribute("searchString");
+
+        if (pagedList.getNrOfElements() > 0) {
+            processRequest(null, null, request);
+        }
+
+        return "/list-employees";
+    }
+
+    // telList redirect page
+    @RequestMapping("/tellist")
+    public String oldTelListRedirect(HttpServletRequest request) {
+        if (!currentSessionUserName.isEmpty()) {
+            request.getSession().setAttribute("currentSessionUserName", currentSessionUserName);
+        }
+        request.getSession().removeAttribute("searchString");
+
+        if (pagedList.getNrOfElements() > 0) {
+            processRequest(null, null, request);
+        }
+
+        return "/list-employees";
     }
 
     // show tel list
-    @RequestMapping("/tellist")
+    @RequestMapping("/list")
     public String showTelList(@RequestParam(value = "searchAction", required = false) String searchString,
                               @RequestParam(value = "show", required = false) String neededPage,
                               HttpServletRequest request) {
 
+        processRequest(searchString, neededPage, request);
+
+        return "/list-employees";
+    }
+
+    private void processRequest(String searchString,
+                                String neededPage,
+                                HttpServletRequest request) {
         if (!currentSessionUserName.isEmpty()) {
             request.getSession().setAttribute("currentSessionUserName", currentSessionUserName);
         }
@@ -83,32 +117,17 @@ public class EmployeeController {
             pagedList.setSource(foundEmployeeList);
             pagedList.setPage(0);
 
-            /*if (searchString.startsWith("&")) {
-                Set<String> matchedRegexFields = employeeWithAdditionalInfo.getAdditionalInfo();
-                if (matchedRegexFields != null && !matchedRegexFields.isEmpty()) {
-
-                    StringBuilder stringBuilder = new StringBuilder();
-                    for (String current : matchedRegexFields) {
-                        stringBuilder.append(current).append("&");
-                    }
-                    String matchedRegexFieldsWithSeparator = stringBuilder.toString().substring(0, stringBuilder.toString().length() - 1);
-
-                    request.getSession().setAttribute("matchedRegexFieldsValues", matchedRegexFieldsWithSeparator);
-
-                }
-            }*/
-
             request.getSession().setAttribute("searchString", searchString);
             request.getSession().setAttribute("employeeList", getPageListWithFixedPhotoLinks(pagedList));
 
         } else if (searchString == null && neededPage == null) {
 
-            List<Employee> tempList = new LinkedList<>();
+            List<Employee> allEployeeList = new LinkedList<>();
             for (Map.Entry<Integer, Employee> one : employeeMap.entrySet()) {
-                tempList.add(one.getValue());
+                allEployeeList.add(one.getValue());
             }
 
-            pagedList.setSource(tempList);
+            pagedList.setSource(allEployeeList);
             pagedList.setPage(0);
 
             request.getSession().removeAttribute("searchString");
@@ -140,7 +159,6 @@ public class EmployeeController {
 
         request.getSession().setAttribute("isPermissionIsGranted", isPermissionIsGranted);
 
-        return "/list-employees";
     }
 
     @RequestMapping(value = "/details-{id}", method = RequestMethod.GET)
@@ -275,10 +293,10 @@ public class EmployeeController {
         String startHighlightTag = "<span class=highLight>";
         String endHighlightTag = "</span>";
 
-        if (persNumber.contains(startHighlightTag)){
+        if (persNumber.contains(startHighlightTag)) {
             persNumber = persNumber.replace(startHighlightTag, "");
         }
-        if (persNumber.contains(endHighlightTag)){
+        if (persNumber.contains(endHighlightTag)) {
             persNumber = persNumber.replace(endHighlightTag, "");
         }
 
