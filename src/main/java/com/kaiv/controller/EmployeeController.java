@@ -6,9 +6,12 @@ import com.kaiv.service.EmployeeService;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
+import org.apache.poi.util.Beta;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.support.PagedListHolder;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -65,31 +68,28 @@ public class EmployeeController {
     // main page
     @RequestMapping("/")
     public String index(HttpServletRequest request) {
-        if (!currentSessionUserName.isEmpty()) {
-            request.getSession().setAttribute("currentSessionUserName", currentSessionUserName);
-        }
-        request.getSession().removeAttribute("searchString");
-
-        if (pagedList.getNrOfElements() > 0) {
-            processRequest(null, null, request);
-        }
-
+        checkIfDataLoaded(request);
         return "/list-employees";
     }
 
     // telList redirect page
     @RequestMapping("/tellist")
     public String oldTelListRedirect(HttpServletRequest request) {
+        checkIfDataLoaded(request);
+        return "/list-employees";
+    }
+
+    private void checkIfDataLoaded(HttpServletRequest request) {
+
         if (!currentSessionUserName.isEmpty()) {
             request.getSession().setAttribute("currentSessionUserName", currentSessionUserName);
         }
         request.getSession().removeAttribute("searchString");
+        addRegexCheetImage(request);
 
-        if (pagedList.getNrOfElements() > 0) {
+        if (employeeService.isDataLoaded()) {
             processRequest(null, null, request);
         }
-
-        return "/list-employees";
     }
 
     // show tel list
@@ -103,9 +103,16 @@ public class EmployeeController {
         return "/list-employees";
     }
 
+    private void addRegexCheetImage(HttpServletRequest request) {
+        String regexChSheetPath = getImagePathFromResources(regexChSeetSheetPicture);
+        String regexPhotoLink = checkAndFixPhotoPosition(regexChSheetPath);
+        request.getSession().setAttribute("regexPhotoLink", regexPhotoLink);
+    }
+
     private void processRequest(String searchString,
                                 String neededPage,
                                 HttpServletRequest request) {
+
         if (!currentSessionUserName.isEmpty()) {
             request.getSession().setAttribute("currentSessionUserName", currentSessionUserName);
         }
@@ -149,10 +156,7 @@ public class EmployeeController {
             }
         }
 
-        String regexChSheetPath = getImagePathFromResources(regexChSeetSheetPicture);
-        String regexPhotoLink = checkAndFixPhotoPosition(regexChSheetPath);
-        request.getSession().setAttribute("regexPhotoLink", regexPhotoLink);
-
+        addRegexCheetImage(request);
         request.getSession().setAttribute("allPagesCount", pagedList.getPageCount());
         request.getSession().setAttribute("currentPage", pagedList.getPage() + 1);
         request.getSession().setAttribute("foundedObjectsCount", pagedList.getNrOfElements());

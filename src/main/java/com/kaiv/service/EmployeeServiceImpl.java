@@ -73,13 +73,19 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Autowired
     String currentSessionUserName;
 
-    private ArrayList adGroupPhotosMembers = new ArrayList();
+    private final ArrayList adGroupPhotosMembers = new ArrayList();
 
     private Map<Integer, EmployeeKaba> mapFromKabaDb;
     private Map<Integer, List<EmployeeCodesFile>> mapFromExcel;
     private List<EmployeeMobileFile> listFromMobileNumbersFile;
-
     public Map<Integer, Employee> employeeMap;
+
+    @Override
+    @Bean
+    @Scope(value = WebApplicationContext.SCOPE_SESSION)
+    public boolean isDataLoaded() {
+        return employeeMap != null;
+    }
 
     @Override
     @Bean

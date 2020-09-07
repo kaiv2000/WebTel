@@ -77,8 +77,6 @@
 
     </style>
 
-    <meta http-equiv="X-UA-Compatible" content="IE=EDGE"/>
-
 </head>
 
 <body onload="loadData()">
@@ -88,9 +86,9 @@
     <div class="container">
 
         <div class="navbar-header">
-            <a class="navbar-brand" href="${pageContext.request.contextPath}">
+            <a class="navbar-brand" id="mainPageButton" href="#">
                 <span class="glyphicon glyphicon-list" aria-hidden="true"></span>
-                <b id="mainPageButton">Main page</b>
+                <b>Main page</b>
             </a>
         </div>
 
@@ -101,13 +99,14 @@
                       id="seachEmployeeForm" role="form">
 
                     <div class="input-group">
-                        <input type="text" style="width:520px" name="searchAction" class="form-control" required="true"
+                        <input disabled id="mainSearchField" type="text" style="width:520px" name="searchAction"
+                               class="form-control" required="true"
                                placeholder="Enter name, last name, number, login, cost center or department of employee"
                                value="${searchString}"
                         >
 
                         <div class="input-group-btn">
-                            <button class="btn btn-default" type="submit">
+                            <button disabled id="mainSearchButton" class="btn btn-default" type="submit">
                                 <i class="glyphicon glyphicon-search"></i>
                                 Search
                             </button>
@@ -141,6 +140,7 @@
 <c:set var="sessionNotCreated" value="${empty employeeList}"/>
 
 <script type="text/javascript">
+
     function loadData() {
 
         var pageNotLoaded = ${sessionNotCreated};
@@ -157,12 +157,21 @@
                     $("#mainData").load(" #mainData > *", function () {
                         document.getElementById("waitData").style.display = 'none';
                         document.getElementById("mainData").style.display = 'block';
+                        unlockSearchBar();
                     });
                 }
             }
             request.open("GET", "${homePageUrl}", true);
             request.send(null);
+        } else {
+            unlockSearchBar();
         }
+    }
+
+    function unlockSearchBar() {
+        document.getElementById("mainPageButton").href = "${pageContext.request.contextPath}";
+        document.getElementById('mainSearchField').disabled = false;
+        document.getElementById('mainSearchButton').disabled = false;
     }
 
 </script>

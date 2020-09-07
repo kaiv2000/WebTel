@@ -18,6 +18,7 @@ public interface EmployeeService {
 
     boolean isPermissionIsGranted();
 
+    boolean isDataLoaded();
 
 
 }
