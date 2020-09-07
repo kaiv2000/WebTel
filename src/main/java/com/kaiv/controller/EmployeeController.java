@@ -99,7 +99,6 @@ public class EmployeeController {
                               HttpServletRequest request) {
 
         processRequest(searchString, neededPage, request);
-
         return "/list-employees";
     }
 
