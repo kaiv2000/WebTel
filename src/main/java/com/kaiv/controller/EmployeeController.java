@@ -14,16 +14,20 @@ import org.springframework.beans.support.PagedListHolder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Scope;
+import org.springframework.http.HttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.annotation.Resource;
 import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
@@ -37,6 +41,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @Scope(value = "session")
 public class EmployeeController {
 
+    @Lazy
     @Autowired
     EmployeeService employeeService;
 
@@ -81,13 +86,15 @@ public class EmployeeController {
 
     private void checkIfDataLoaded(HttpServletRequest request) {
 
-        if (!currentSessionUserName.isEmpty()) {
-            request.getSession().setAttribute("currentSessionUserName", currentSessionUserName);
-        }
-        request.getSession().removeAttribute("searchString");
-        addRegexCheetImage(request);
+        HttpSession session = request.getSession(true);
 
-        if (employeeService.isDataLoaded()) {
+        if (!currentSessionUserName.isEmpty()) {
+            session.setAttribute("currentSessionUserName", currentSessionUserName);
+        }
+        session.removeAttribute("searchString");
+        addRegexCheetImage(session);
+
+        if (!session.isNew()) {
             processRequest(null, null, request);
         }
     }
@@ -102,137 +109,153 @@ public class EmployeeController {
         return "/list-employees";
     }
 
-    private void addRegexCheetImage(HttpServletRequest request) {
+    private void addRegexCheetImage(HttpSession session) {
         String regexChSheetPath = getImagePathFromResources(regexChSeetSheetPicture);
         String regexPhotoLink = checkAndFixPhotoPosition(regexChSheetPath);
-        request.getSession().setAttribute("regexPhotoLink", regexPhotoLink);
+        session.setAttribute("regexPhotoLink", regexPhotoLink);
     }
 
     private void processRequest(String searchString,
                                 String neededPage,
                                 HttpServletRequest request) {
 
-        if (!currentSessionUserName.isEmpty()) {
-            request.getSession().setAttribute("currentSessionUserName", currentSessionUserName);
-        }
+        HttpSession session = request.getSession(true);
 
-        if (searchString != null) {
-            EmployeeWithAdditionalInfo employeeWithAdditionalInfo = employeeService.searchEmployeesByName(searchString);
-            List<Employee> foundEmployeeList = employeeWithAdditionalInfo.getFoundedEmployeeList();
-
-            pagedList.setSource(foundEmployeeList);
-            pagedList.setPage(0);
-
-            request.getSession().setAttribute("searchString", searchString);
-            request.getSession().setAttribute("employeeList", getPageListWithFixedPhotoLinks(pagedList));
-
-        } else if (searchString == null && neededPage == null) {
-
-            List<Employee> allEployeeList = new LinkedList<>();
-            for (Map.Entry<Integer, Employee> one : employeeMap.entrySet()) {
-                allEployeeList.add(one.getValue());
+        if (employeeMap != null && employeeMap.size() > 0) {
+            if (!currentSessionUserName.isEmpty()) {
+                session.setAttribute("currentSessionUserName", currentSessionUserName);
             }
 
-            pagedList.setSource(allEployeeList);
-            pagedList.setPage(0);
+            if (searchString != null) {
 
-            request.getSession().removeAttribute("searchString");
-            request.getSession().setAttribute("employeeList", getPageListWithFixedPhotoLinks(pagedList));
-        }
+                EmployeeWithAdditionalInfo employeeWithAdditionalInfo = employeeService.searchEmployeesByName(searchString);
+                List<Employee> foundEmployeeList = employeeWithAdditionalInfo.getFoundedEmployeeList();
 
-        if (neededPage != null) {
+                pagedList.setSource(foundEmployeeList);
+                pagedList.setPage(0);
 
-            switch (neededPage) {
-                case "prevPage":
-                    pagedList.previousPage();
-                    request.getSession().setAttribute("employeeList", getPageListWithFixedPhotoLinks(pagedList));
-                    break;
+                session.setAttribute("searchString", searchString);
+                session.setAttribute("employeeList", getPageListWithFixedPhotoLinks(pagedList));
 
-                case "nextPage":
-                    pagedList.nextPage();
-                    request.getSession().setAttribute("employeeList", getPageListWithFixedPhotoLinks(pagedList));
-                    break;
+            } else if (neededPage == null) {
+                addAllUsersToList(session);
             }
+
+            if (neededPage != null) {
+
+                if (pagedList.getSource().isEmpty()) {
+                    addAllUsersToList(session);
+                }
+
+                switch (neededPage) {
+                    case "prevPage":
+                        pagedList.previousPage();
+                        session.setAttribute("employeeList", getPageListWithFixedPhotoLinks(pagedList));
+                        break;
+
+                    case "nextPage":
+                        pagedList.nextPage();
+                        session.setAttribute("employeeList", getPageListWithFixedPhotoLinks(pagedList));
+                        break;
+                }
+            }
+
+            addRegexCheetImage(session);
+            session.setAttribute("allPagesCount", pagedList.getPageCount());
+            session.setAttribute("currentPage", pagedList.getPage() + 1);
+            session.setAttribute("foundedObjectsCount", pagedList.getNrOfElements());
+
+            session.setAttribute("isPermissionIsGranted", isPermissionIsGranted);
+
+        }
+    }
+
+    private void addAllUsersToList(HttpSession session) {
+        List<Employee> allEmployeeList = new LinkedList<>();
+        for (Map.Entry<Integer, Employee> one : employeeMap.entrySet()) {
+            allEmployeeList.add(one.getValue());
         }
 
-        addRegexCheetImage(request);
-        request.getSession().setAttribute("allPagesCount", pagedList.getPageCount());
-        request.getSession().setAttribute("currentPage", pagedList.getPage() + 1);
-        request.getSession().setAttribute("foundedObjectsCount", pagedList.getNrOfElements());
+        pagedList.setSource(allEmployeeList);
+        pagedList.setPage(0);
 
-        request.getSession().setAttribute("isPermissionIsGranted", isPermissionIsGranted);
-
+        session.removeAttribute("searchString");
+        session.setAttribute("employeeList", getPageListWithFixedPhotoLinks(pagedList));
     }
 
     @RequestMapping(value = "/details-{id}", method = RequestMethod.GET)
     public String showProduct(@PathVariable("id") int persNumber,
                               HttpServletRequest request) {
 
+        HttpSession session = request.getSession(true);
+
         if (!currentSessionUserName.equals("loggedUserNotFound")) {
-            request.getSession().setAttribute("currentSessionUserName", currentSessionUserName);
+            session.setAttribute("currentSessionUserName", currentSessionUserName);
         }
-        request.getSession().setAttribute("isPermissionIsGranted", isPermissionIsGranted);
+        session.setAttribute("isPermissionIsGranted", isPermissionIsGranted);
 
-        EmployeeWithAdditionalInfo employeeWithAdditionalInfo = employeeService.searchEmployeesByName(String.valueOf(persNumber));
-        List<Employee> foundEmployeeList = employeeWithAdditionalInfo.getFoundedEmployeeList();
+        if (employeeMap != null && employeeMap.size() > 0) {
 
-        if (!foundEmployeeList.isEmpty()) {
+            EmployeeWithAdditionalInfo employeeWithAdditionalInfo = employeeService.searchEmployeesByName(String.valueOf(persNumber));
+            List<Employee> foundEmployeeList = employeeWithAdditionalInfo.getFoundedEmployeeList();
 
-            int id = foundEmployeeList.get(0).getId();
-            String photoLink = foundEmployeeList.get(0).getPhotoLink();
-            String plantName = foundEmployeeList.get(0).getPlantName();
-            String email = foundEmployeeList.get(0).getEmail();
-            String login = foundEmployeeList.get(0).getLogin();
-            String costCenter = foundEmployeeList.get(0).getCostCenter();
-            String position = foundEmployeeList.get(0).getPosition();
-            String department = foundEmployeeList.get(0).getDepartment();
-            String name = foundEmployeeList.get(0).getName();
-            String hiredDate = foundEmployeeList.get(0).getHiredDate();
-            String dateOfBirth = foundEmployeeList.get(0).getDateOfBirth();
-            String privatePhoneNum = foundEmployeeList.get(0).getPrivatePhoneNum();
-            String currentUserPersNumber = String.valueOf(persNumber);
-            List<String> allMobileTelNumbers = new CopyOnWriteArrayList<>();
-            List<String> phoneNumbersWithDescription = new ArrayList<>();
+            if (!foundEmployeeList.isEmpty()) {
+
+                int id = foundEmployeeList.get(0).getId();
+                String photoLink = foundEmployeeList.get(0).getPhotoLink();
+                String plantName = foundEmployeeList.get(0).getPlantName();
+                String email = foundEmployeeList.get(0).getEmail();
+                String login = foundEmployeeList.get(0).getLogin();
+                String costCenter = foundEmployeeList.get(0).getCostCenter();
+                String position = foundEmployeeList.get(0).getPosition();
+                String department = foundEmployeeList.get(0).getDepartment();
+                String name = foundEmployeeList.get(0).getName();
+                String hiredDate = foundEmployeeList.get(0).getHiredDate();
+                String dateOfBirth = foundEmployeeList.get(0).getDateOfBirth();
+                String privatePhoneNum = foundEmployeeList.get(0).getPrivatePhoneNum();
+                String currentUserPersNumber = String.valueOf(persNumber);
+                List<String> allMobileTelNumbers = new CopyOnWriteArrayList<>();
+                List<String> phoneNumbersWithDescription = new ArrayList<>();
 
 
-            for (Employee oneEmployee : foundEmployeeList) {
-                if (!oneEmployee.getTelNumber().trim().isEmpty() && !oneEmployee.getDescription().trim().isEmpty()) {
-                    phoneNumbersWithDescription.add(oneEmployee.getTelNumber() + " " + oneEmployee.getDescription());
-                }
+                for (Employee oneEmployee : foundEmployeeList) {
+                    if (!oneEmployee.getTelNumber().trim().isEmpty() && !oneEmployee.getDescription().trim().isEmpty()) {
+                        phoneNumbersWithDescription.add(oneEmployee.getTelNumber() + " " + oneEmployee.getDescription());
+                    }
 
-                for (String oneMobileNumber : oneEmployee.getAllMobileTelNumbers()) {
-                    if (!oneMobileNumber.isEmpty()) {
-                        if (!allMobileTelNumbers.isEmpty()) {
-                            for (String currentMobileNumber : allMobileTelNumbers) {
-                                if (!currentMobileNumber.substring(0, 14).equals(oneMobileNumber.substring(0, 14))) {
-                                    allMobileTelNumbers.add(oneMobileNumber);
-                                } else {
-                                    if (currentMobileNumber.length() > oneMobileNumber.length()) {
-                                        allMobileTelNumbers.remove(currentMobileNumber);
+                    for (String oneMobileNumber : oneEmployee.getAllMobileTelNumbers()) {
+                        if (!oneMobileNumber.isEmpty()) {
+                            if (!allMobileTelNumbers.isEmpty()) {
+                                for (String currentMobileNumber : allMobileTelNumbers) {
+                                    if (!currentMobileNumber.substring(0, 14).equals(oneMobileNumber.substring(0, 14))) {
                                         allMobileTelNumbers.add(oneMobileNumber);
+                                    } else {
+                                        if (currentMobileNumber.length() > oneMobileNumber.length()) {
+                                            allMobileTelNumbers.remove(currentMobileNumber);
+                                            allMobileTelNumbers.add(oneMobileNumber);
+                                        }
                                     }
                                 }
-                            }
-                        } else {
-                            if (!oneMobileNumber.isEmpty()) {
-                                allMobileTelNumbers.add(oneMobileNumber);
+                            } else {
+                                if (!oneMobileNumber.isEmpty()) {
+                                    allMobileTelNumbers.add(oneMobileNumber);
+                                }
                             }
                         }
                     }
                 }
+
+                if (!new File(photoLink).exists()) {
+                    photoLink = getPhotoLink(plantName, currentUserPersNumber);
+                } else {
+                    photoLink = checkAndFixPhotoPosition(photoLink);
+                }
+
+                Employee currentEmployee = new Employee(id, name, department, allMobileTelNumbers, currentUserPersNumber, plantName, login, email, costCenter, position, photoLink, hiredDate, dateOfBirth, privatePhoneNum, phoneNumbersWithDescription);
+
+                session.setAttribute("currentEmployee", currentEmployee);
             }
-
-            if (!new File(photoLink).exists()) {
-                photoLink = getPhotoLink(plantName, currentUserPersNumber);
-            } else {
-                photoLink = checkAndFixPhotoPosition(photoLink);
-            }
-
-            Employee currentEmployee = new Employee(id, name, department, allMobileTelNumbers, currentUserPersNumber, plantName, login, email, costCenter, position, photoLink, hiredDate, dateOfBirth, privatePhoneNum, phoneNumbersWithDescription);
-
-            request.getSession().setAttribute("currentEmployee", currentEmployee);
         }
-
         return "/user-details";
     }
 
