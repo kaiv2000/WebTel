@@ -92,7 +92,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Scope(value = WebApplicationContext.SCOPE_SESSION)
     public Map<Integer, Employee> getEmployeeListNewSession() {
         // TODO
-        // boolean isDbAccessible = false;
+        //boolean isDbAccessible = false;
         boolean isDbAccessible = readFromKabaDb();
         readXlsFile();
         readMobileNumbersFile();
@@ -510,18 +510,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         return employeeMap;
     }
 
- /*   public static void main(String[] args) {
-        EmployeeServiceImpl test = new EmployeeServiceImpl();
-        test.TelListe_FILE_NAME = "//svua1file01/groups/IT/Siemens/Codes.xlsm";
-        test.MobilePhones_FILE_NAME = "//svua1file01/infos/IT Info/List of LEONI Kyivstar numbers.xlsx";
-        test.getEmployeeListNewSession();
-
-        String regex = "\\A4(\\d){3}.+Kolomyia\\z";
-        String regex2 = "П.*\\bІван\\b";
-
-        test.searchEmployeesByName(regex);
-    }*/
-
     public EmployeeWithAdditionalInfo searchEmployeesByName(String inputString) {
 
         List<Employee> resultList = new ArrayList<>();
@@ -597,6 +585,10 @@ public class EmployeeServiceImpl implements EmployeeService {
             regex = regex.replace("+", "\\+");
         }
 
+        if (isNeedToUseRegex) {
+            regex = regex.replace("|", "\\|");
+        }
+
         if (!isNeedToUseRegex) {
             if (regex.contains("(")) {
                 regex = regex.replace("(", "\\(");
@@ -615,6 +607,28 @@ public class EmployeeServiceImpl implements EmployeeService {
         return pattern;
     }
 
+    /*public static void main(String[] args) {
+        EmployeeServiceImpl test = new EmployeeServiceImpl();
+        test.TelListe_FILE_NAME = "//svua1file01/groups/IT/Siemens/Codes.xlsm";
+        test.MobilePhones_FILE_NAME = "//svua1file01/infos/IT Info/List of LEONI Kyivstar numbers.xlsx";
+       // test.getEmployeeListNewSession();
+
+        String regex = "4301|Admin. Tkach Andriy|400007|Ткач Андрій Степанович|WSD Адміністративний відділ Коломия УА|Керівник адміністративного відділу|20419110|tkan1001|andriy.tkach@leoni.com|[+380 67 6544030]|Kolomyia";
+
+
+        Pattern pattern = test.getPatternObject("\\|2\\d{3}.*Kolomyia", true);
+        if (pattern != null) {
+            if (pattern.matcher(regex).find()) {
+                System.out.println("true");
+            }
+            else {
+                System.out.println("false");
+            }
+        }
+
+        //System.out.println((test.getOneSearchListResultWithRegEx(regex)));
+    }*/
+
     private List<Employee> getOneSearchListResultWithRegEx(String regex) {
         List<Employee> result = new ArrayList<>();
 
@@ -623,7 +637,6 @@ public class EmployeeServiceImpl implements EmployeeService {
             for (Employee currentEmployee : employeeMap.values()) {
                 String inputField = currentEmployee.toStringForRegex();
                 if (pattern.matcher(inputField).find()) {
-                    System.out.println(currentEmployee.getHiredDate());
                     result.add(getEmployeeWithHighlightedTag(currentEmployee, pattern, inputField, true));
                 }
             }

@@ -64,6 +64,7 @@
             display: inline-block;
             position: fixed;
             top: 5%;
+            left: 30%;
         }
 
         .highLight {

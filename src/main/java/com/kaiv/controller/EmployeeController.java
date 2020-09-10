@@ -6,23 +6,17 @@ import com.kaiv.service.EmployeeService;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
-import org.apache.poi.util.Beta;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.support.PagedListHolder;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Scope;
-import org.springframework.http.HttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.annotation.Resource;
 import javax.imageio.ImageIO;
@@ -68,7 +62,7 @@ public class EmployeeController {
     String noPhotoPicture;
 
     @Value("${getinfo.regexCheetSheetPicture}")
-    String regexChSeetSheetPicture;
+    String regexChSheetSheetPicture;
 
     // main page
     @RequestMapping("/")
@@ -110,8 +104,8 @@ public class EmployeeController {
     }
 
     private void addRegexCheetImage(HttpSession session) {
-        String regexChSheetPath = getImagePathFromResources(regexChSeetSheetPicture);
-        String regexPhotoLink = checkAndFixPhotoPosition(regexChSheetPath);
+        String regexChSheetPath = getImagePathFromResources(regexChSheetSheetPicture);
+        String regexPhotoLink = getPhotoLinkEncrypted(regexChSheetPath);
         session.setAttribute("regexPhotoLink", regexPhotoLink);
     }
 
