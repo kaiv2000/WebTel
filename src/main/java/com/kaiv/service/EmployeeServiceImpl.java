@@ -113,7 +113,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         mapFromKabaDb = new HashMap<>();
         String query = "SELECT PersonalID, FullName, lower([Windows Login]) as AD_Account, lower([E-Mail]) as Email, CostCenter, Position, Department, Plant, Hired, DateOfBirth, [Phone No_] as privatePhoneNum  FROM Personnel_List WHERE Fired IS NULL";
-        jdbcTemplate.setQueryTimeout(4);
+        jdbcTemplate.setQueryTimeout(7);
         try {
             jdbcTemplate.query(
                     query,
